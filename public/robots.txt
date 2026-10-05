@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+
+Sitemap: https://student-complaint-management-system-pxivk3v80-aj-2ac3.vercel.app/sitemap.xml
