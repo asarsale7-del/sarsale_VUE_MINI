@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: campuscare-complaint-system
+    runtime: node
+    plan: starter
+    region: singapore
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    disk:
+      name: complaint-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: ADMIN_USERNAME
+        value: schooladmin
+      - key: ADMIN_NAME
+        value: School Complaint Monitor
+      - key: ADMIN_PASSWORD
+        generateValue: true
+      - key: DATABASE_PATH
+        value: /var/data/complaints.sqlite
+      - key: UPLOADS_DIRECTORY
+        value: /var/data/uploads

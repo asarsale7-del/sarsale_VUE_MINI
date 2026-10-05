@@ -120,6 +120,7 @@ export function createApp({ database, uploadsDir, production = false, allowedOri
   const getComplaint = database.prepare(`${selectComplaint.source} WHERE c.reference = ?`);
 
   app.disable('x-powered-by');
+  if (production) app.set('trust proxy', 1);
   app.use((request, response, next) => {
     response.set({
       'X-Content-Type-Options': 'nosniff',

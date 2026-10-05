@@ -51,6 +51,18 @@ npm start
 
 Set `PORT`, `APP_ORIGIN`, `DATABASE_PATH`, and `UPLOADS_DIRECTORY` in the environment as needed. Set `APP_ORIGIN` to the exact public origin when using a reverse proxy. When exposed outside a trusted local network, terminate HTTPS at the server or a trusted reverse proxy and use a strong, private administrator password. Production session cookies are marked `Secure`.
 
+## Deploy to Render
+
+The root [render.yaml](./render.yaml) defines a Render Blueprint for this app, including a Node web service, health check, generated administrator password, and a persistent disk for SQLite and uploaded evidence. The Blueprint uses Render's paid Starter web-service plan because persistent disks are not available on free web services.
+
+1. Push the project to GitHub and sign in to Render.
+2. In the Render Dashboard, choose **New** → **Blueprint**, connect the `asarsale7-del/sarsale_VUE_MINI` repository, and select the `main` branch.
+3. Review the Blueprint resources and plan, then apply it. Render builds the Vue app and starts the API; wait for the service health check to pass.
+4. Open the service's **Environment** settings and securely reveal the generated `ADMIN_PASSWORD`. Sign in at the service's `onrender.com` URL using username `schooladmin`, and share the password privately with the designated complaint monitor.
+5. Keep the generated password private. To rotate it, set a new `ADMIN_PASSWORD` in Render's Environment settings and save; the app updates the admin password when the service restarts.
+
+The service's persistent disk preserves the complaint database and attachments across deploys. Keep the paid service active and configure regular backups according to the school's data-retention requirements.
+
 ## Features and data handling
 
 - Student accounts use salted `scrypt` password hashes; session tokens are random, stored as hashes in SQLite, and sent only in `HttpOnly`, `SameSite=Strict` cookies.

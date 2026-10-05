@@ -36,7 +36,7 @@ before(async () => {
   uploadsDir = path.join(directory, 'uploads');
   database = openDatabase(':memory:');
   await createAdmin(database, 'schooladmin', 'School Administrator', 'test-admin-password');
-  const app = createApp({ database, uploadsDir });
+  const app = createApp({ database, uploadsDir, production: true });
   server = createServer(app);
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   baseUrl = `http://127.0.0.1:${server.address().port}`;
@@ -222,6 +222,12 @@ test('limits repeated failed sign-in attempts', async () => {
 });
 
 test('logout revokes access and cross-origin requests are rejected', async () => {
+  const proxiedHttpsOrigin = `https://${new URL(baseUrl).host}`;
+  const proxiedRequest = await fetch(`${baseUrl}/api/auth/me`, {
+    headers: { Origin: proxiedHttpsOrigin, 'X-Forwarded-Proto': 'https' }
+  });
+  assert.equal(proxiedRequest.status, 200);
+
   const rejectedOrigin = await fetch(`${baseUrl}/api/complaints`, {
     headers: { Origin: 'https://untrusted.example', Cookie: studentCookie }
   });
