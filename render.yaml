@@ -2,15 +2,11 @@ services:
   - type: web
     name: campuscare-complaint-system
     runtime: node
-    plan: starter
+    plan: free
     region: singapore
     buildCommand: npm ci && npm run build
     startCommand: npm start
     healthCheckPath: /api/health
-    disk:
-      name: complaint-data
-      mountPath: /var/data
-      sizeGB: 1
     envVars:
       - key: NODE_ENV
         value: production
@@ -20,7 +16,13 @@ services:
         value: School Complaint Monitor
       - key: ADMIN_PASSWORD
         generateValue: true
-      - key: DATABASE_PATH
-        value: /var/data/complaints.sqlite
-      - key: UPLOADS_DIRECTORY
-        value: /var/data/uploads
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_STORAGE_BUCKET
+        value: complaint-evidence
+      - key: APP_ORIGIN
+        value: https://student-complaint-management-system-eight.vercel.app

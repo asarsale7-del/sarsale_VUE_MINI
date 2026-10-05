@@ -1,6 +1,6 @@
 # Student Complaint Management System
 
-A full-stack student complaint portal built with Vue, Express, and SQLite. Students can create accounts, file private complaints, attach evidence, and follow status updates. Administrators can review submissions, filter the inbox, and update complaint statuses with a note recorded in the case history.
+A full-stack student complaint portal built with Vue, Express, PostgreSQL, and private object storage in production. Local development uses SQLite and local files. Students can create accounts, file private complaints, attach evidence, and follow status updates. Administrators can review submissions, filter the inbox, and update complaint statuses with a note recorded in the case history.
 
 ## Requirements
 
@@ -41,7 +41,7 @@ The development command starts Vite on port 3000 and the API on port 3001. Vite 
 
 ## Production
 
-Build the frontend, set `NODE_ENV=production`, and start the server. The production server serves the built frontend and API on the same port:
+Build the frontend, configure PostgreSQL and private Supabase Storage, set `NODE_ENV=production`, and start the server. The production server serves the built frontend and API on the same port:
 
 ```powershell
 npm run build
@@ -49,29 +49,31 @@ $env:NODE_ENV = "production"
 npm start
 ```
 
-Set `PORT`, `APP_ORIGIN`, `DATABASE_PATH`, and `UPLOADS_DIRECTORY` in the environment as needed. Set `APP_ORIGIN` to the exact public origin when using a reverse proxy. When exposed outside a trusted local network, terminate HTTPS at the server or a trusted reverse proxy and use a strong, private administrator password. Production session cookies are marked `Secure`.
+Production requires `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_STORAGE_BUCKET`; these must remain private server-side secrets. The schema is created idempotently at startup. Set `APP_ORIGIN` to the exact public website origin when requests are reverse-proxied. Production session cookies are marked `Secure`.
 
 ## Deploy to Render
 
-The root [render.yaml](./render.yaml) defines a Render Blueprint for this app, including a Node web service, health check, generated administrator password, and a persistent disk for SQLite and uploaded evidence. The Blueprint uses Render's paid Starter web-service plan because persistent disks are not available on free web services.
+The root [render.yaml](./render.yaml) defines a free Render web service for the API, a health check, and a generated administrator password. Persistent PostgreSQL data and evidence files are hosted separately by Supabase; no complaint data or uploads are kept on Render's temporary filesystem. The [vercel.json](./vercel.json) rewrite proxies `/api/*` requests from the public Vercel website to the Render service, keeping secure session cookies same-origin.
 
-1. Push the project to GitHub and sign in to Render.
-2. In the Render Dashboard, choose **New** → **Blueprint**, connect the `asarsale7-del/sarsale_VUE_MINI` repository, and select the `main` branch.
-3. Review the Blueprint resources and plan, then apply it. Render builds the Vue app and starts the API; wait for the service health check to pass.
-4. Open the service's **Environment** settings and securely reveal the generated `ADMIN_PASSWORD`. Sign in at the service's `onrender.com` URL using username `schooladmin`, and share the password privately with the designated complaint monitor.
-5. Keep the generated password private. To rotate it, set a new `ADMIN_PASSWORD` in Render's Environment settings and save; the app updates the admin password when the service restarts.
+1. Get the school's approval for the hosting providers and their data-retention/privacy terms before accepting real student complaints.
+2. Create a Supabase project. In its Storage page, create a **private** bucket named `complaint-evidence`, allow only PDF/JPEG/PNG/GIF/WebP files, and set its per-file limit to 5 MB.
+3. In Supabase, copy the PostgreSQL connection URI (use SSL) and the server-side service-role key. Never put either secret in browser code, GitHub, or Vercel's frontend variables.
+4. In Render, choose **New** → **Blueprint**, select the `asarsale7-del/sarsale_VUE_MINI` repository and the `main` branch, then apply the Blueprint. Enter the Supabase values for `DATABASE_URL`, `SUPABASE_URL`, and `SUPABASE_SERVICE_ROLE_KEY` when prompted. The app creates its database tables on startup.
+5. Wait for the Render health check to pass and note the exact service URL. If it is not `https://campuscare-complaint-system.onrender.com`, update the destination in `vercel.json` to the actual Render URL and push that change.
+6. The connected Vercel project will redeploy from GitHub. Verify `/api/health` on the public Vercel website before enabling student access.
+7. In Render's **Environment** settings, securely reveal the generated `ADMIN_PASSWORD`. Sign in as `schooladmin` and share the credential privately with the designated complaint monitor.
 
-The service's persistent disk preserves the complaint database and attachments across deploys. Keep the paid service active and configure regular backups according to the school's data-retention requirements.
+Render's free web service can spin down when idle, and Supabase free-tier projects/storage have quotas and availability limits. The first request after idle may be slow. Keep backups and review retention and access policies; use school-approved paid/managed service plans if the portal becomes an official channel for sensitive complaints.
 
 ## Features and data handling
 
-- Student accounts use salted `scrypt` password hashes; session tokens are random, stored as hashes in SQLite, and sent only in `HttpOnly`, `SameSite=Strict` cookies.
+- Student accounts use salted `scrypt` password hashes; session tokens are random, stored as hashes in the database, and sent only in `HttpOnly`, `SameSite=Strict` cookies.
 - Students can view only their own complaints. Administrators can view all complaints and student details.
 - Complaint references contain 128 bits of randomness. Students can use a reference number for guest tracking, which returns only the category, dates, and status history. Viewing descriptions, staff notes, or evidence still requires the student's account or an administrator account.
 - Complaint status changes and administrator notes are retained in a status history.
-- Attachments are limited to one PDF or image, up to 5 MB. File contents are checked before storage; files are kept outside the public web directory and downloads require authorization.
+- Attachments are limited to one PDF or image, up to 5 MB. File contents are checked before storage; production files are kept in a private Supabase Storage bucket and downloads require authorization.
 - Student ID format is checked during registration, but this standalone project does not connect to a school roster to verify a student's identity. A school deployment should integrate its identity provider or an approved enrollment roster before treating registrations as verified identities.
-- SQLite is appropriate for a local capstone or a single-server deployment. A multi-server school deployment should use a managed database, scheduled backups, HTTPS, and the school's identity and retention policies.
+- Local development uses SQLite. Production uses managed PostgreSQL and private object storage; a school deployment still needs approved identity verification, scheduled backups, HTTPS, and documented retention/access policies.
 
 ## Checks
 
