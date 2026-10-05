@@ -1,6 +1,8 @@
 import pg from 'pg';
+import { fileURLToPath } from 'node:url';
 
 const { Pool } = pg;
+const supabaseRootCertificate = fileURLToPath(new URL('./supabase-root-ca.crt', import.meta.url));
 
 const schema = `
   CREATE TABLE IF NOT EXISTS users (
@@ -55,7 +57,15 @@ const schema = `
 
 export async function openPostgresDatabase(connectionString) {
   if (!connectionString) throw new Error('DATABASE_URL is required for the hosted database.');
-  const pool = new Pool({ connectionString, max: 5, idleTimeoutMillis: 30_000, connectionTimeoutMillis: 10_000 });
+  const databaseUrl = new URL(connectionString);
+  databaseUrl.searchParams.set('sslmode', 'verify-full');
+  databaseUrl.searchParams.set('sslrootcert', supabaseRootCertificate);
+  const pool = new Pool({
+    connectionString: databaseUrl.toString(),
+    max: 5,
+    idleTimeoutMillis: 30_000,
+    connectionTimeoutMillis: 10_000
+  });
   try {
     await pool.query(schema);
   } catch (error) {
