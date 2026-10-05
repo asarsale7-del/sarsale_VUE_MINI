@@ -294,6 +294,13 @@ function api(url, options = {}) {
   if (options.body && !(options.body instanceof FormData)) headers.set('Content-Type', 'application/json');
   return fetch(url, { ...options, headers, credentials: 'same-origin' }).then(async (response) => {
     if (response.status === 204) return null;
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      if (!response.ok) {
+        throw new Error('Complaint services are not connected to this website yet. Please contact the school administrator.');
+      }
+      throw new Error('The complaint service returned an unexpected response. Please try again later.');
+    }
     const body = await response.json();
     if (!response.ok) throw new Error(body.error || 'The request could not be completed.');
     return body;
