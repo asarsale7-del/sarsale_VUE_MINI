@@ -4,7 +4,7 @@
       <button v-if="view !== 'home'" class="icon-nav-button" aria-label="Back to previous screen" title="Back to previous screen" :disabled="!canGoBack" @click="goBack">←</button>
       <a class="brand" href="#" @click.prevent="navigate('home')">
         <img class="school-logo-small" src="/mater-dei-logo.png" alt="" />
-        <span>Student Complaint<small>MANAGEMENT SYSTEM</small></span>
+        <span>MDC Student Complaint<small>MANAGEMENT SYSTEM</small></span>
       </a>
       <nav v-if="user" class="main-nav" aria-label="Main navigation">
         <button :class="{ active: view === 'home' }" @click="navigate('home')">Overview</button>
