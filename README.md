@@ -53,7 +53,7 @@ Production requires `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`,
 
 ## Deploy to Render
 
-The root [render.yaml](./render.yaml) defines a free Render web service for the API, a health check, and a generated administrator password. Persistent PostgreSQL data and evidence files are hosted separately by Supabase; no complaint data or uploads are kept on Render's temporary filesystem. The [vercel.json](./vercel.json) rewrite proxies `/api/*` requests from the public Vercel website to the Render service, keeping secure session cookies same-origin.
+The root [render.yaml](./render.yaml) defines a free Render web service for the API, a health check, and a generated administrator password. Its build command explicitly installs development dependencies because Vite is needed to build the frontend even when Render sets `NODE_ENV=production`. Persistent PostgreSQL data and evidence files are hosted separately by Supabase; no complaint data or uploads are kept on Render's temporary filesystem. The [vercel.json](./vercel.json) rewrite proxies `/api/*` requests from the public Vercel website to the Render service, keeping secure session cookies same-origin.
 
 1. Get the school's approval for the hosting providers and their data-retention/privacy terms before accepting real student complaints.
 2. Create a Supabase project. In its Storage page, create a **private** bucket named `complaint-evidence`, allow only PDF/JPEG/PNG/GIF/WebP files, and set its per-file limit to 5 MB.
